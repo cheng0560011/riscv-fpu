@@ -24,13 +24,19 @@ export ROOT_DIR := $(shell pwd)
 
 ### To Enable IVERILOG FST DUMP
 export IVERILOG_DUMPER = fst
-
+VPI_PATH:=$(VCS_HOME)/include
 
 
 # Targets
 .PHONY: clean rtl gate help
 
 default: clean rtl
+
+vcs_sim: clean
+	gcc -shared -o fpu_sp.so fpu_sp.c -I$(VPI_PATH) -fPIC
+	gcc -shared -o fpu_sp_tc.so fpu_sp_tc.c -I$(VPI_PATH) -fPIC
+	vcs -full64 -sverilog -timescale=1ns/1ps -debug_all -l vcs.log -f filelist_rtl.f -top tb_top -CFLAGS "-fPIC" -load ./fpu_sp.so -load ./fpu_sp_tc.so -o simv
+	./simv
 
 rtl: clean  
 	iverilog-vpi fpu_sp.c
@@ -56,3 +62,4 @@ clean:
 	$(RM) -R *.vcd
 	$(RM) -R *.fst
 	$(RM) -R *.o
+	$(RM) -rf core csrc simv* vc_hdrs.h ucli.key urg* *.log *.fsdb novas.* verdiLog *.so
